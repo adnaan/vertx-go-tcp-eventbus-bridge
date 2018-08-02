@@ -15,13 +15,14 @@
 package eventbus
 
 import (
+	"encoding/json"
 	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMessageSend(t *testing.T) {
+func TestMessageRegister(t *testing.T) {
 
 	listener, err := net.Listen("tcp", "localhost:7000")
 	if err != nil {
@@ -29,14 +30,16 @@ func TestMessageSend(t *testing.T) {
 	}
 	defer listener.Close()
 
+	sendMsg := newRegisterMessage("foo.bar")
+
 	go func(t *testing.T) {
 		eventBus, err := NewEventBus("localhost:7000")
 		if err != nil {
 			t.Error("Event bus creation failed", err)
 		}
 		defer eventBus.Close()
-		msg := newRegisterMessage("foo.bar")
-		if err = eventBus.send(msg); err != nil {
+
+		if err = eventBus.send(sendMsg); err != nil {
 			t.Error("Message sending failed", err)
 		}
 	}(t)
@@ -51,10 +54,62 @@ func TestMessageSend(t *testing.T) {
 	}
 	t.Log(msg)
 
-	assert.Equal(t, "register", msg.Type)
-	assert.Equal(t, "foo.bar", msg.Address)
+	assert.Equal(t, sendMsg, msg)
+}
 
-	if msg.Body != nil {
-		t.Fatal("unexpected body")
+type ExampleBody struct {
+	Alpha string      `json:"alpha"`
+	Beta  interface{} `json:"beta"`
+}
+
+func TestMessageSend(t *testing.T) {
+
+	listener, err := net.Listen("tcp", "localhost:7000")
+	if err != nil {
+		t.Error("Starting server failed", err)
 	}
+	defer listener.Close()
+
+	exampleBody := ExampleBody{
+		Alpha: "hello",
+		Beta: map[string]interface{}{
+			"hello": "world",
+		},
+	}
+
+	exampleBodyBytes, err := json.Marshal(&exampleBody)
+	assert.NoError(t, err)
+
+	headers := map[string]interface{}{
+		"key": "value",
+	}
+
+	headersBytes, err := json.Marshal(&headers)
+	assert.NoError(t, err)
+
+	sendMsg := newSendMessage("foo.bar", "", headersBytes, exampleBodyBytes)
+
+	go func(t *testing.T) {
+		eventBus, err := NewEventBus("localhost:7000")
+		if err != nil {
+			t.Error("Event bus creation failed", err)
+		}
+		defer eventBus.Close()
+
+		if err = eventBus.send(sendMsg); err != nil {
+			t.Error("Message sending failed", err)
+		}
+	}(t)
+
+	conn, err := listener.Accept()
+	if err != nil {
+		t.Error("Accept() failed")
+	}
+	msg, err := receive(conn)
+	if err != nil {
+		t.Error("Bad response", err)
+	}
+	t.Log(msg)
+
+	assert.Equal(t, sendMsg, msg)
 }
