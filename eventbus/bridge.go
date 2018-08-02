@@ -64,34 +64,31 @@ func (eventBus *EventBus) Receive() (*Message, error) {
 // Publish a message to an address.
 //
 // This method is safe to use from concurrent goroutines.
-func (eventBus *EventBus) Publish(address string, headers, body interface{}) error {
+func (eventBus *EventBus) Publish(address string, headers, body []byte) error {
 	return eventBus.send(newPublishMessage(address, headers, body))
 }
 
 // Send a message to an address.
 //
 // This method is safe to use from concurrent goroutines.
-func (eventBus *EventBus) Send(address string, headers, body interface{}) error {
-	return eventBus.send(newSendMessage(address, nil, headers, body))
+func (eventBus *EventBus) Send(address string, headers, body []byte) error {
+	return eventBus.send(newSendMessage(address, "", headers, body))
 }
 
-// Send a message to an address, and also specify a destination for an expected response.
+// SendWithReplyAddress a message to an address, and also specify a destination for an expected response.
 // The response will be eventually fetched from the Receive() method.
-//
 // This method is safe to use from concurrent goroutines.
-func (eventBus *EventBus) SendWithReplyAddress(address, replyAddress string, headers, body interface{}) error {
+func (eventBus *EventBus) SendWithReplyAddress(address, replyAddress string, headers, body []byte) error {
 	return eventBus.send(newSendMessage(address, replyAddress, headers, body))
 }
 
 // Register this client to receive messages on a destination.
-//
 // This method is safe to use from concurrent goroutines.
 func (eventBus *EventBus) Register(address string) error {
 	return eventBus.send(newRegisterMessage(address))
 }
 
-// Unregisters this client from receiving messages from a destination.
-//
+// Unregister this client from receiving messages from a destination.
 // This method is safe to use from concurrent goroutines.
 func (eventBus *EventBus) Unregister(address string) error {
 	return eventBus.send(newUnregisterMessage(address))

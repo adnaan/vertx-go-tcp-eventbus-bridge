@@ -15,40 +15,11 @@
 package eventbus
 
 import (
-	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"net"
-	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
-
-func TestProperJsonEncoding(t *testing.T) {
-
-	m := newSendMessage("foo.bar", "anywhere", nil, map[string]string{
-		"text": "hello",
-	})
-
-	bytes, err := json.Marshal(m)
-	if err != nil {
-		t.Error("Marshalling failed", err)
-	}
-
-	jsonText := string(bytes)
-	t.Log(jsonText)
-	assert.True(t, strings.Contains(jsonText, `"address":"foo.bar"`))
-	assert.True(t, strings.Contains(jsonText, `"body":{"text":"hello"`))
-	assert.True(t, strings.Contains(jsonText, `"replyAddress":"anywhere"`))
-
-	m = newSendMessage("foo.bar", nil, nil, map[string]string{
-		"text": "hello",
-	})
-	if bytes, err = json.Marshal(m); err != nil {
-		t.Error("Marshalling failed", err)
-	}
-	jsonText = string(bytes)
-	t.Log(jsonText)
-	assert.False(t, strings.Contains(jsonText, "replyAddress"))
-}
 
 func TestMessageSend(t *testing.T) {
 
@@ -82,6 +53,8 @@ func TestMessageSend(t *testing.T) {
 
 	assert.Equal(t, "register", msg.Type)
 	assert.Equal(t, "foo.bar", msg.Address)
-	assert.Equal(t, nil, msg.Body)
 
+	if msg.Body != nil {
+		t.Fatal("unexpected body")
+	}
 }

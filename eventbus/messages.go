@@ -14,21 +14,21 @@
 
 package eventbus
 
-// A Vert.x event bus message that can be mapped to JSON.
+// Message A Vert.x event bus message that can be mapped to JSON.
 type Message struct {
-	Type         string      `json:"type"`
-	ReplyAddress interface{} `json:"replyAddress,omitempty"`
-	Address      string      `json:"address"`
-	Headers      interface{} `json:"headers"`
-	Body         interface{} `json:"body"`
+	Type         string `json:"type"`
+	ReplyAddress string `json:"replyAddress,omitempty"`
+	Address      string `json:"address"`
+	Headers      []byte `json:"headers"`
+	Body         []byte `json:"body"`
 }
 
-// This method returns true if the Type field has value 'err'.
+// IsError This method returns true if the Type field has value 'err'.
 func (msg *Message) IsError() bool {
 	return msg.Type == "err"
 }
 
-func newSendMessage(address string, replyAddress, headers, body interface{}) *Message {
+func newSendMessage(address string, replyAddress string, headers, body []byte) *Message {
 	return &Message{
 		Type:         "send",
 		Address:      address,
@@ -38,32 +38,28 @@ func newSendMessage(address string, replyAddress, headers, body interface{}) *Me
 	}
 }
 
-func newPublishMessage(address string, headers, body interface{}) *Message {
+func newPublishMessage(address string, headers, body []byte) *Message {
 	return &Message{
-		Type:         "publish",
-		Address:      address,
-		ReplyAddress: nil,
-		Headers:      headers,
-		Body:         body,
+		Type:    "publish",
+		Address: address,
+		Headers: headers,
+		Body:    body,
 	}
 }
 
 func newRegisterMessage(address string) *Message {
 	return &Message{
-		Type:         "register",
-		Address:      address,
-		ReplyAddress: nil,
-		Headers:      nil,
-		Body:         nil,
+		Type:    "register",
+		Address: address,
 	}
 }
 
 func newUnregisterMessage(address string) *Message {
 	return &Message{
-		Type:         "unregister",
-		Address:      address,
-		ReplyAddress: nil,
-		Headers:      nil,
-		Body:         nil,
+		Type:    "unregister",
+		Address: address,
+
+		Headers: nil,
+		Body:    nil,
 	}
 }
